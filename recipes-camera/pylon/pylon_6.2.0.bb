@@ -20,38 +20,38 @@ PACKAGE_BEFORE_PN = "${PN}-runtime"
 
 ################### dev package
 
-FILES:${PN}-dev =     "/opt/pylon/include \
+FILES_${PN}-dev =     "/opt/pylon/include \
                        /opt/pylon/bin/pylon-config \
                        /opt/pylon/share/pylon/Samples"
 # Samples contain libBconAdapterSample-3.0.so
-INSANE_SKIP:${PN}-dev += "dev-elf"
+INSANE_SKIP_${PN}-dev += "dev-elf"
 
 ################### doc package
 
-FILES:${PN}-doc =     "/opt/pylon/share/pylon/doc"
+FILES_${PN}-doc =     "/opt/pylon/share/pylon/doc"
 
 ################### Runtime Package
 
-FILES:${PN}-runtime = "/opt/pylon/lib/*.so \
+FILES_${PN}-runtime = "/opt/pylon/lib/*.so \
                        /opt/pylon/lib/gentlproducer \
                        /opt/pylon/share/pylon/licenses \
                        /opt/pylon/share/pylon/log \
                        /opt/pylon/share/pylon/* "
-RDEPENDS:${PN}-runtime += "glibc libstdc++ libgcc"
+RDEPENDS_${PN}-runtime += "glibc libstdc++ libgcc"
 
-RRECOMMENDS:${PN}-runtime = "python3-pypylon"
+RRECOMMENDS_${PN}-runtime = "python3-pypylon"
 # The runtime contains some symlinks, that should be left in
-INSANE_SKIP:${PN}-runtime += "dev-so"
+INSANE_SKIP_${PN}-runtime += "dev-so"
 
-PRIVATE_LIBS:${PN}-runtime = "lib?xapi* *libusb* libpylon_TL*"
+PRIVATE_LIBS_${PN}-runtime = "lib?xapi* *libusb* libpylon_TL*"
 
 ################### Main pylon Package (Viewer)
 
-FILES:${PN} =          "/opt/pylon \
+FILES_${PN} =          "/opt/pylon \
                         /usr/bin"
-RDEPENDS:${PN} += "${PN}-runtime"
+RDEPENDS_${PN} += "${PN}-runtime"
 # Default to having the full pylon package installed
-RRECOMMENDS:${PN} += "${PN}-dev ${PN}-doc"
+RRECOMMENDS_${PN} += "${PN}-dev ${PN}-doc"
 
 # pylon viewer is based on qt with different platform plugins
 # As we don't know the exact setup of the customer the strategy is as follows:
@@ -59,30 +59,30 @@ RRECOMMENDS:${PN} += "${PN}-dev ${PN}-doc"
 # - install all plugins
 # - be conservative in RDEPENDS, if in doubt add it to RRECOMMENDS
 
-INSANE_SKIP:${PN} += "file-rdeps"
+INSANE_SKIP_${PN} += "file-rdeps"
 
 # Dependencies for platform/libqlinuxfb
-RRECOMMENDS:${PN} += "libxkbcommon libudev libinput libdrm"
+RRECOMMENDS_${PN} += "libxkbcommon libudev libinput libdrm"
 
 # Dependencies for platform/libqwebgl
-RRECOMMENDS:${PN} += "fontconfig freetype"
+RRECOMMENDS_${PN} += "fontconfig freetype"
 
 # Dependencies for platform/libqxcb
 # If distro contains x11 add all dependencies
-RDEPENDS:${PN} += " ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'libx11 libx11-xcb libxcb libxcb-glx libxcb-xfixes libsm libice libxkbcommon ', '', d)}"
+RDEPENDS_${PN} += " ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'libx11 libx11-xcb libxcb libxcb-glx libxcb-xfixes libsm libice libxkbcommon ', '', d)}"
 # We don't know if the platform provides libgl and libegl and can therefore not depend on it
 # xauth is recommended for everyone using the viewer via remote x11
-RRECOMMENDS:${PN} += " ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'xauth libegl libgl', '', d)}"
+RRECOMMENDS_${PN} += " ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'xauth libegl libgl', '', d)}"
 
 # Dependencies for platform/wayland
 RDEPENDS_${PN} += " ${@bb.utils.contains('DISTRO_FEATURES', 'wayland', 'wayland', '', d)}"
 
-INSANE_SKIP:${PN} += "already-stripped"
+INSANE_SKIP_${PN} += "already-stripped"
 # pylon viewer contains some symlinks, that should be left in
-INSANE_SKIP:${PN} += "dev-so"
+INSANE_SKIP_${PN} += "dev-so"
 
 # pylon viewer does not provide any library to the outside
-PRIVATE_LIBS:${PN} = "*"
+PRIVATE_LIBS_${PN} = "*"
 
 ###################### end of packages
 
@@ -105,17 +105,18 @@ python check_basler_eula() {
 
 
 # Extract the archive in unpack instead of do_install so that the license files are available for LIC_FILE checking
-python do_unpack:append() {
+python do_unpack_basler() {
     bb.build.exec_func("check_basler_eula", d)
 
     pylon_archive = d.getVar('PYLON_FILE_NAME')
     workdir = d.getVar('WORKDIR')
     srcdir = d.getVar('S')
 
-    bb.utils.remove(srcdir+'/pylon', recurse=True)
-    bb.process.run('sh %s/%s  --quiet --accept' % (workdir, pylon_archive), cwd=srcdir)
+    import os
+    bb.utils.remove(os.path.join(srcdir, 'pylon'), recurse=True)
+    bb.process.run('sh %s/%s --quiet --accept' % (workdir, pylon_archive), cwd=srcdir)
 }
-
+do_unpack[postfuncs] += "do_unpack_basler"
 
 do_install[dirs] += "${D}/opt"
 

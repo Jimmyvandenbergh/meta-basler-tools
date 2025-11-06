@@ -13,13 +13,13 @@ SRCREV = "2bd0a6268dd5dd36a0aa8486c7158ffc0166abbc"
 S = "${WORKDIR}/git"
 
 DEPENDS = "pylon python3 swig-native python3-setuptools-native"
-RDEPENDS:${PN} = "python3-numpy"
+RDEPENDS_${PN} = "python3-numpy"
 
 # pypylon packages pylon libs which needs a bit of support
 # treat the libs as private
 EXCLUDE_FROM_SHLIBS = "1"
 # add dependencies from pylon-runtime
-RDEPENDS:${PN} += "glibc libstdc++ libgcc"
-INSANE_SKIP:${PN} += "already-stripped"
+RDEPENDS_${PN} += "glibc libstdc++ libgcc"
+INSANE_SKIP_${PN} += "already-stripped"
 
 export PYLON_ROOT = "${WORKDIR}/recipe-sysroot/opt/pylon"
